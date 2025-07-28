@@ -1,0 +1,86 @@
+
+name: Tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: tests
+      - name: Run Playwright tests
+        run: xvfb-run --auto-servernum -- npx playwright test --reporter=dot,github,html
+        working-directory: tests
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 30
+
+  postman:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install Newman and HTML Reporter
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-html
+      - name: Run Postman API tests and generate HTML report
+        run: |
+          ls -l tests
+          newman run ./tests/api-test-collection.json --reporters cli,html --reporter-html-export ./postman-report.html
+          if [ ! -f ./postman-report.html ]; then
+            echo "ERROR: postman-report.html not found!"
+            exit 1
+            fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postman-report
+          path: postman-report.html
+          retention-days: 30
+
+  deploy-docs:
+    needs: [playwright, postman]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Playwright HTML report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: docs/playwright
+      - name: Download Postman HTML report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: postman-report
+          path: docs/postman
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

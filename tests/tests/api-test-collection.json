@@ -1,0 +1,595 @@
+{
+	"info": {
+		"_postman_id": "9e48db69-90b0-403d-88c2-0215e6bf1239",
+		"name": "API Automation Assignment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1041811"
+	},
+	"item": [
+		{
+			"name": "Pre setup",
+			"item": [
+				{
+					"name": "register new user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const uniqueEmail = `user${Date.now()}@test.com`;\r",
+									"pm.environment.set(\"randomEmail\", uniqueEmail);\r",
+									"pm.environment.set(\"password\", \"test123\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User registered successfully\", () => {\r",
+									"  pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{randomEmail}}\",\r\n    \"email\": \"{{randomEmail}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/auth/register",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", () => {\r",
+									"  pm.response.to.have.status(200);\r",
+									"  const json = pm.response.json();\r",
+									"  pm.expect(json).to.have.property(\"token\");\r",
+									"  pm.environment.set(\"token\", json.token);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{randomEmail}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/auth/login",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Items",
+			"item": [
+				{
+					"name": "Items Positive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Fetched items successfully\", () => {\r",
+									"  pm.response.to.have.status(200);\r",
+									"  pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "items Negative (No Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"No token, authorization denied\", () => {\r",
+									"  pm.response.to.have.status(401);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "items Positive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Item created\", () => {\r",
+									"  pm.response.to.have.status(201);\r",
+									"  const id = pm.response.json().id;\r",
+									"  pm.environment.set(\"itemId\", id);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"test card\",\r\n  \"description\": \"test description\",\r\n  \"color\": \"#28a745\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "items Negative (Empty Body)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Should fail with 400 on empty body\", () => {\r",
+									"  pm.response.to.have.status(400);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "edit item Positive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Item updated\", () => {\r",
+									"  pm.response.to.have.status(200);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Updated Task Name\",\r\n  \"description\": \"test description\",\r\n  \"color\": \"#28a745\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists/{{itemId}}",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists",
+								"{{itemId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "edit item Negative (Invalid id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Should return 404 for invalid ID\", () => {\r",
+									"  pm.response.to.have.status(404);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Updated Task Name\",\r\n  \"description\": \"test description\",\r\n  \"color\": \"#28a745\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists/",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete item Positive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Item deleted\", () => {\r",
+									"  pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists/{{itemId}}",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists",
+								"{{itemId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete item Negative (Already deleted)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Should return 404 on second delete\", () => {\r",
+									"  pm.response.to.have.status(404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://taskflow-smiw.onrender.com/api/lists/{{itemId}}",
+							"protocol": "https",
+							"host": [
+								"taskflow-smiw",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"lists",
+								"{{itemId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": " {{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "https://taskflow-smiw.onrender.com",
+			"type": "default"
+		}
+	]
+}
