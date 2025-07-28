@@ -6,21 +6,19 @@ const swaggerSpecs = require('./swagger');
 const db = require('./database');
 const config = require('./config');
 
-// Load environment variables (optional)
 dotenv.config();
 
 const app = express();
 
-// Middleware - Allow all CORS
 app.use(cors({
-  origin: '*', // Allow all origins
-  credentials: false, // Set to false when using wildcard origin
+  origin: '*', 
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
-// Swagger Documentation
+// Swagger
 app.use('/api/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
@@ -32,7 +30,6 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lists', require('./routes/lists'));
 app.use('/api/tasks', require('./routes/tasks'));
 
-// Health check route - redirect to API documentation
 app.get('/', (req, res) => {
   res.redirect('/api/swagger');
 });

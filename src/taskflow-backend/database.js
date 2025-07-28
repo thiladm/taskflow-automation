@@ -1,10 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 const config = require('./config');
 
 class Database {
     constructor() {
-        // Use database path from config
         const dbPath = config.dbPath;
 
         console.log(`Database path: ${dbPath}`);
@@ -65,7 +63,6 @@ class Database {
     `);
     }
 
-    // Helper method to promisify database operations
     run(sql, params = []) {
         return new Promise((resolve, reject) => {
             this.db.run(sql, params, function (err) {
